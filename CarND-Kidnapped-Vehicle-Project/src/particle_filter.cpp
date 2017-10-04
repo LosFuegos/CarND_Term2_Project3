@@ -137,6 +137,8 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
     //float sum = 0.0;
     for(int n = 0; n < num_particles; ++n){
         double theta = particles[n].theta;
+        double x = particles[n].x;
+        double y = particles[n].y;
         //std::std::vector<int> associations;
         //std::vector<double> sense_x;
         //std::vector<double> sense_y;
@@ -145,8 +147,8 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
             LandmarkObs mark = {};
             double obs_x = observations[k].x;
             double obs_y = observations[k].y;
-            mark.x = particles[n].x + (cos(theta) * obs_x) - (sin(theta) * obs_y);
-            mark.y = particles[n].y + (sin(theta) * obs_x) + (cos(theta) * obs_y);
+            mark.x = x + (cos(theta) * obs_x) - (sin(theta) * obs_y);
+            mark.y = y + (sin(theta) * obs_x) + (cos(theta) * obs_y);
             Transformed_Obs.push_back(mark);
         }
         particles[n].weight = 1.0;
@@ -157,15 +159,19 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
             double diff_x = 0;
             double diff_y = 0;
             double nearest = 99999;
-            for(int j = 0; j < map_landmarks.landmark_list.size(); ++j){
-                if(dist(map_landmarks.landmark_list[j].x_f, map_landmarks.landmark_list[j].y_f, particles[n].x, particles[n].y) <= 50){
 
-                    double distance = dist(Transformed_Obs[i].x, Transformed_Obs[i].y, map_landmarks.landmark_list[j].x_f, map_landmarks.landmark_list[j].y_f);
+            for(int j = 0; j < map_landmarks.landmark_list.size(); ++j){
+                double map_x_f = map_landmarks.landmark_list[j].x_f;
+                double map_y_f = map_landmarks.landmark_list[j].y_f;
+
+                if(dist(map_x_f, map_y_f, x, y) <= 50){
+
+                    double distance = dist(Transformed_Obs[i].x, Transformed_Obs[i].y, map_x_f, map_y_f);
                     if(distance < nearest){
                         nearest = distance;
                         l_id = j;
-                        diff_x = Transformed_Obs[i].x - map_landmarks.landmark_list[j].x_f;
-                        diff_y = Transformed_Obs[i].y - map_landmarks.landmark_list[j].y_f;
+                        diff_x = Transformed_Obs[i].x - map_x_f;
+                        diff_y = Transformed_Obs[i].y - map_y_f;
                     }
                 }
             }
