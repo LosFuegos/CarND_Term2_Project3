@@ -28,7 +28,7 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
     //std::cout << "Here 4" << std::endl;
     default_random_engine gen1;
     //cout << "here 1";
-    num_particles = 150;
+    num_particles = 1;
     double std_x = std[0];
     double std_y = std[1];
     double std_theta =std[2];
@@ -48,6 +48,11 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
         weights.push_back(p.weight);
     }
 
+    std::cout << "----------------Intial State------------------" << endl;
+
+    std::cout << "X: " << particles[0].x << endl;
+    std::cout << "Y: " << particles[0].y << endl;
+    std::cout << "Theta: " << particles[0].theta << endl;
     is_initialized = true;
 }
 
@@ -73,7 +78,7 @@ void ParticleFilter::prediction(double delta_t, double std_pos[], double velocit
 
         double theta = particles[i].theta;
 
-        if(fabs(yaw_rate) >= 1e-6){
+        if(fabs(yaw_rate) >= 1e-8){
             double velocity_yaw = velocity / yaw_rate;
             theta_f = theta + (yaw_rate * delta_t);
             x_f = particles[i].x + (velocity_yaw) * (sin(theta_f) - sin(theta));
@@ -129,7 +134,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
     //   and the following is a good resource for the actual equation to implement (look at equation
     //   3.33
     //   http://planning.cs.uiuc.edu/node99.html
-    std::vector<LandmarkObs> Transformed_Obs;
+
     //std::cout << "Here 7" << std::endl;
     double gauss_norm = 1.0 / (2.0 * M_PI * std_landmark[0] * std_landmark[1]);
     double sig_x_2 = 2.0 * std_landmark[0] * std_landmark[0];
@@ -142,6 +147,9 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
         //std::std::vector<int> associations;
         //std::vector<double> sense_x;
         //std::vector<double> sense_y;
+        std::vector<LandmarkObs> Transformed_Obs;
+
+        std::cout << "---------------Transformations-----------------" << endl;
 
         for(int k = 0; k < observations.size(); ++k){
             LandmarkObs mark = {};
@@ -150,10 +158,13 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
             mark.x = x + (cos(theta) * obs_x) - (sin(theta) * obs_y);
             mark.y = y + (sin(theta) * obs_x) + (cos(theta) * obs_y);
             Transformed_Obs.push_back(mark);
+
+            std::cout << "Obs(x,y)(" << obs_x << "," << obs_y << ")--->TObs(x,y)(" << mark.x << "," << mark.y << ")" << endl;
         }
         particles[n].weight = 1.0;
         //weights[n] = 1.0;
         int l_id;
+        std::cout << "----------------Associations-----------------" << endl;
 
         for(int i = 0; i < Transformed_Obs.size(); ++i){
             double diff_x = 0;
@@ -176,19 +187,23 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
                 }
             }
             Transformed_Obs[i].id = l_id;
-            double weight = gauss_norm * exp(-( (((diff_x) * (diff_x)) / (sig_x_2)) + (((diff_y) * (diff_y)) / (sig_y_2)) ));
-
-            if(fabs(weight) > 1e-6)
+            std::cout << "Landmark Index: " << l_id << "; Transform_obs(x,y): (" << Transformed_Obs[i].x << "," << Transformed_Obs[i].y << "); Landmark(x,y): (" << map_landmarks.landmark_list[l_id].x_f << "," << map_landmarks.landmark_list[l_id].y_f << ")" << endl;
+            double weight = gauss_norm * exp(-( (pow(diff_x,2) / sig_x_2) + (pow(diff_y,2) / sig_y_2) ));
+            std::cout << "Weight: " << weight << endl;
+            if(weight > 1e-6)
                 particles[n].weight *= weight;
 
 
         }
         Transformed_Obs.clear();
         weights[n] = particles[n].weight;
+        std::cout << "---------------Final Weight------------------" << endl;
+        std::cout << weights[0] << endl;
         //weights.clear();
         //sum += particles[n].weight;
 
     }
+
     /*float normalized_sum= 0.0;
     for(int v = 0; v < num_particles; ++v){
         particles[v].weight /= sum;
@@ -208,7 +223,6 @@ void ParticleFilter::resample() {
     //   http://en.cppreference.com/w/cpp/numeric/random/discrete_distribution
     //default_random_engine gen3;
     //std::cout << "Here 11" << std::endl;
-
     random_device seed;
     mt19937 random_generator(seed());
     std::discrete_distribution<int> di(weights.begin(), weights.end());
@@ -225,6 +239,8 @@ void ParticleFilter::resample() {
     weights.clear();
     weights.assign(1.0, num_particles);
     //std::cout << "Here 15" << std::endl;
+
+
 
 }
 
