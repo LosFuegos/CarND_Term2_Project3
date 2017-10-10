@@ -136,9 +136,9 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
     //   http://planning.cs.uiuc.edu/node99.html
 
     //std::cout << "Here 7" << std::endl;
-    double gauss_norm = 1.0 / (2.0 * M_PI * std_landmark[0] * std_landmark[1]);
-    double sig_x_2 = 2.0 * std_landmark[0] * std_landmark[0];
-    double sig_y_2 = 2.0 * std_landmark[1] * std_landmark[1];
+    double const gauss_norm = 1.0 / (2.0 * M_PI * std_landmark[0] * std_landmark[1]);
+    double const sig_x_2 = 2.0 * std_landmark[0] * std_landmark[0];
+    double const sig_y_2 = 2.0 * std_landmark[1] * std_landmark[1];
     //float sum = 0.0;
     for(int n = 0; n < num_particles; ++n){
         double theta = particles[n].theta;
@@ -148,7 +148,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
         //std::vector<double> sense_x;
         //std::vector<double> sense_y;
         std::vector<LandmarkObs> Transformed_Obs;
-
+        std::cout << endl;
         std::cout << "---------------Transformations-----------------" << endl;
 
         for(int k = 0; k < observations.size(); ++k){
@@ -180,18 +180,18 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
                     double distance = dist(Transformed_Obs[i].x, Transformed_Obs[i].y, map_x_f, map_y_f);
                     if(distance < nearest){
                         nearest = distance;
-                        l_id = j;
+                        l_id = j + 1;
                         diff_x = Transformed_Obs[i].x - map_x_f;
                         diff_y = Transformed_Obs[i].y - map_y_f;
                     }
                 }
             }
             Transformed_Obs[i].id = l_id;
-            std::cout << "Landmark Index: " << l_id << "; Transform_obs(x,y): (" << Transformed_Obs[i].x << "," << Transformed_Obs[i].y << "); Landmark(x,y): (" << map_landmarks.landmark_list[l_id].x_f << "," << map_landmarks.landmark_list[l_id].y_f << ")" << endl;
+            std::cout << "Index: " << l_id << "; Transformed(x,y): (" << Transformed_Obs[i].x << "," << Transformed_Obs[i].y << "); Landmark(x,y): (" << map_landmarks.landmark_list[l_id - 1].x_f << "," << map_landmarks.landmark_list[l_id - 1].y_f << ")" << endl;
             double weight = gauss_norm * exp(-( (pow(diff_x,2) / sig_x_2) + (pow(diff_y,2) / sig_y_2) ));
             std::cout << "Weight: " << weight << endl;
             if(weight > 1e-6)
-                particles[n].weight *= weight;
+                particles[n].weight = particles[n].weight * weight;
 
 
         }
@@ -221,10 +221,10 @@ void ParticleFilter::resample() {
     // TODO: Resample particles with replacement with probability proportional to their weight.
     // NOTE: You may find std::discrete_distribution helpful here.
     //   http://en.cppreference.com/w/cpp/numeric/random/discrete_distribution
-    //default_random_engine gen3;
+    default_random_engine gen3;
     //std::cout << "Here 11" << std::endl;
-    random_device seed;
-    mt19937 random_generator(seed());
+    //random_device seed;
+    //mt19937 random_generator(seed());
     std::discrete_distribution<int> di(weights.begin(), weights.end());
     //std::cout << "Here 12" << std::endl;
 
@@ -232,7 +232,7 @@ void ParticleFilter::resample() {
     //std::cout << "Here 13" << std::endl;
 
     for(int i = 0; i < num_particles; ++i)
-        resample_particles.push_back(particles[di(random_generator)]);
+        resample_particles.push_back(particles[di(gen3)]);
     //std::cout << "Here 14" << std::endl;
 
     particles = resample_particles;
