@@ -28,7 +28,7 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
     //std::cout << "Here 4" << std::endl;
     default_random_engine gen1;
     //cout << "here 1";
-    num_particles = 1;
+    num_particles = 23;
     double std_x = std[0];
     double std_y = std[1];
     double std_theta =std[2];
@@ -48,11 +48,11 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
         weights.push_back(p.weight);
     }
 
-    std::cout << "----------------Intial State------------------" << endl;
+    //std::cout << "----------------Intial State------------------" << endl;
 
-    std::cout << "X: " << particles[0].x << endl;
-    std::cout << "Y: " << particles[0].y << endl;
-    std::cout << "Theta: " << particles[0].theta << endl;
+    //std::cout << "X: " << particles[0].x << endl;
+    //std::cout << "Y: " << particles[0].y << endl;
+    //std::cout << "Theta: " << particles[0].theta << endl;
     is_initialized = true;
 }
 
@@ -67,7 +67,9 @@ void ParticleFilter::prediction(double delta_t, double std_pos[], double velocit
     double std_y = std_pos[1];
     double std_theta = std_pos[2];
 
-
+    normal_distribution<double> dist_x(0, std_x);
+    normal_distribution<double> dist_y(0, std_y);
+    normal_distribution<double> dist_theta(0, std_theta);
 
     for(int i = 0; i < num_particles; ++i){
 
@@ -93,14 +95,11 @@ void ParticleFilter::prediction(double delta_t, double std_pos[], double velocit
             theta_f = theta;
 
         }
-        // add gaussian noise
-        normal_distribution<double> dist_x(x_f, std_x);
-        normal_distribution<double> dist_y(y_f, std_y);
-        normal_distribution<double> dist_theta(theta_f, std_theta);
 
-        particles[i].x = dist_x(gen2);
-        particles[i].y = dist_y(gen2);
-        particles[i].theta = dist_theta(gen2);
+
+        particles[i].x = x_f + dist_x(gen2);
+        particles[i].y = y_f + dist_y(gen2);
+        particles[i].theta = theta_f + dist_theta(gen2);
     }
     //cout << "here 3";
 }
@@ -148,8 +147,8 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
         //std::vector<double> sense_x;
         //std::vector<double> sense_y;
         std::vector<LandmarkObs> Transformed_Obs;
-        std::cout << endl;
-        std::cout << "---------------Transformations-----------------" << endl;
+       // std::cout << endl;
+       // std::cout << "---------------Transformations-----------------" << endl;
 
         for(int k = 0; k < observations.size(); ++k){
             LandmarkObs mark = {};
@@ -159,12 +158,12 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
             mark.y = y + (sin(theta) * obs_x) + (cos(theta) * obs_y);
             Transformed_Obs.push_back(mark);
 
-            std::cout << "Obs(x,y)(" << obs_x << "," << obs_y << ")--->TObs(x,y)(" << mark.x << "," << mark.y << ")" << endl;
+            //std::cout << "Obs(x,y)(" << obs_x << "," << obs_y << ")--->TObs(x,y)(" << mark.x << "," << mark.y << ")" << endl;
         }
         particles[n].weight = 1.0;
         //weights[n] = 1.0;
         int l_id;
-        std::cout << "----------------Associations-----------------" << endl;
+        //std::cout << "----------------Associations-----------------" << endl;
 
         for(int i = 0; i < Transformed_Obs.size(); ++i){
             double diff_x = 0;
@@ -175,7 +174,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
                 double map_x_f = map_landmarks.landmark_list[j].x_f;
                 double map_y_f = map_landmarks.landmark_list[j].y_f;
 
-                if(dist(map_x_f, map_y_f, x, y) <= 50){
+                if(dist(map_x_f, map_y_f, x, y) <= sensor_range){
 
                     double distance = dist(Transformed_Obs[i].x, Transformed_Obs[i].y, map_x_f, map_y_f);
                     if(distance < nearest){
@@ -187,9 +186,9 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
                 }
             }
             Transformed_Obs[i].id = l_id;
-            std::cout << "Index: " << l_id << "; Transformed(x,y): (" << Transformed_Obs[i].x << "," << Transformed_Obs[i].y << "); Landmark(x,y): (" << map_landmarks.landmark_list[l_id - 1].x_f << "," << map_landmarks.landmark_list[l_id - 1].y_f << ")" << endl;
+            //std::cout << "Index: " << l_id << "; Transformed(x,y): (" << Transformed_Obs[i].x << "," << Transformed_Obs[i].y << "); Landmark(x,y): (" << map_landmarks.landmark_list[l_id - 1].x_f << "," << map_landmarks.landmark_list[l_id - 1].y_f << ")" << endl;
             double weight = gauss_norm * exp(-( (pow(diff_x,2) / sig_x_2) + (pow(diff_y,2) / sig_y_2) ));
-            std::cout << "Weight: " << weight << endl;
+            //std::cout << "Weight: " << weight << endl;
             if(weight > 1e-6)
                 particles[n].weight = particles[n].weight * weight;
 
@@ -197,7 +196,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
         }
         Transformed_Obs.clear();
         weights[n] = particles[n].weight;
-        std::cout << "---------------Final Weight------------------" << endl;
+        //std::cout << "---------------Final Weight------------------" << endl;
         std::cout << weights[0] << endl;
         //weights.clear();
         //sum += particles[n].weight;
@@ -236,8 +235,8 @@ void ParticleFilter::resample() {
     //std::cout << "Here 14" << std::endl;
 
     particles = resample_particles;
-    weights.clear();
-    weights.assign(1.0, num_particles);
+    //weights.clear();
+    //weights.assign(1.0, num_particles);
     //std::cout << "Here 15" << std::endl;
 
 
