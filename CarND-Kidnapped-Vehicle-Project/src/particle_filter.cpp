@@ -189,7 +189,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
             //std::cout << "Index: " << l_id << "; Transformed(x,y): (" << Transformed_Obs[i].x << "," << Transformed_Obs[i].y << "); Landmark(x,y): (" << map_landmarks.landmark_list[l_id - 1].x_f << "," << map_landmarks.landmark_list[l_id - 1].y_f << ")" << endl;
             double weight = gauss_norm * exp(-( (pow(diff_x,2) / sig_x_2) + (pow(diff_y,2) / sig_y_2) ));
             //std::cout << "Weight: " << weight << endl;
-            if(weight > 1e-6)
+            if(weight > 1e-8)
                 particles[n].weight = particles[n].weight * weight;
 
 
